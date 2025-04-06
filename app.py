@@ -36,10 +36,17 @@ def convert_to_lofi():
 
         # Convert audio
         audio = AudioSegment.from_file(input_path)
-        slowed = audio._spawn(audio.raw_data, overrides={
-            "frame_rate": int(audio.frame_rate * 0.85)
-        }).set_frame_rate(audio.frame_rate)
-        lofi = low_pass_filter(slowed, cutoff=1500)
+
+# Convert to mono for compatibility
+audio = audio.set_channels(1)
+
+# Slow down (lofi effect)
+slowed = audio._spawn(audio.raw_data, overrides={
+    "frame_rate": int(audio.frame_rate * 0.85)
+}).set_frame_rate(audio.frame_rate)
+
+# Apply filter
+lofi = low_pass_filter(slowed, cutoff=1500)
 
         # Export with good quality
         lofi.export(output_path, format="mp3", bitrate="128k")
