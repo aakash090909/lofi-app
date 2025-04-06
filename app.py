@@ -11,9 +11,6 @@ OUTPUT_FOLDER = 'outputs'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-# Max file size 5MB
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5 MB
-
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -24,39 +21,36 @@ def convert_to_lofi():
         return 'No audio file provided', 400
 
     file = request.files['audio']
+    if file.filename == '':
+        return 'No selected file', 400
+
     filename = str(uuid4()) + os.path.splitext(file.filename)[1]
     input_path = os.path.join(UPLOAD_FOLDER, filename)
     output_path = os.path.join(OUTPUT_FOLDER, f"lofi_{filename}")
 
-    file.save(input_path)
-
     try:
+        file.save(input_path)
+
+        # Load and convert audio
         audio = AudioSegment.from_file(input_path)
 
-        # Safe conversion: keep stereo if stereo, mono if mono
-        if audio.channels > 2:
-            audio = audio.set_channels(2)
-        elif audio.channels == 1:
-            pass  # already mono
-        else:
-            audio = audio.set_channels(2)  # fallback to stereo
+        # Convert stereo to mono if needed
+        if audio.channels > 1:
+            audio = audio.set_channels(1)
 
-        # Slow down the audio
+        # Slow down and apply low pass filter
         slowed = audio._spawn(audio.raw_data, overrides={
             "frame_rate": int(audio.frame_rate * 0.85)
         }).set_frame_rate(audio.frame_rate)
 
-        # Apply low-pass filter
         lofi = low_pass_filter(slowed, cutoff=1500)
-
-        # Export to mp3
         lofi.export(output_path, format="mp3")
 
         return send_file(output_path, as_attachment=True)
 
     except Exception as e:
-        print("Error:", e)
-        return "An error occurred while processing the audio.", 500
+        print("Error during conversion:", e)
+        return "Error processing audio", 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5000)
