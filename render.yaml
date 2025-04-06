@@ -1,4 +1,8 @@
-buildCommand: |
-  apt-get update && apt-get install -y ffmpeg
-  pip install -r requirements.txt
-startCommand: gunicorn app:app
+services:
+  - type: web
+    name: lofi-app
+    env: python
+    buildCommand: |
+      apt-get update && apt-get install -y ffmpeg
+      pip install -r requirements.txt
+    startCommand: gunicorn app:app --timeout 60
