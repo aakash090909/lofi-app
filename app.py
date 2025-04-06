@@ -5,6 +5,14 @@ import os
 
 app = Flask(__name__)
 
+UPLOAD_FOLDER = 'uploads'
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
 def convert_to_lofi(audio_path):
     try:
         song = AudioSegment.from_file(audio_path)
@@ -15,19 +23,18 @@ def convert_to_lofi(audio_path):
         print("Error during conversion:", e)
         return None
 
-@app.route('/')
-def index():
-    return render_template('index.html')
-
 @app.route('/convert', methods=['POST'])
 def convert():
     file = request.files['file']
-    filename = "original.wav"
-    file.save(filename)
+    filepath = os.path.join(UPLOAD_FOLDER, "original.wav")
+    file.save(filepath)
 
-    output = convert_to_lofi(filename)
+    output = convert_to_lofi(filepath)
     if output:
-        output_path = "lofi.wav"
+        output_path = os.path.join(UPLOAD_FOLDER, "lofi.wav")
         output.export(output_path, format="wav")
         return send_file(output_path, as_attachment=True)
     return "Conversion failed", 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
