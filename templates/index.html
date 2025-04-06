@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lofi Converter 🎵</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #1e1e30, #0c0c1d);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      animation: backgroundMove 20s linear infinite;
+    }
+
+    @keyframes backgroundMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 1000px 1000px; }
+    }
+
+    .card {
+      background: rgba(42, 42, 58, 0.95);
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 25px 40px rgba(0, 0, 0, 0.5);
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+      animation: fadeIn 1s ease-in-out;
+      backdrop-filter: blur(10px);
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: #ffcbcb;
+      text-shadow: 0 2px 10px #ff6b81;
+    }
+
+    .upload-section {
+      margin: 2rem 0;
+    }
+
+    input[type="file"] {
+      background: #333;
+      padding: 0.75rem;
+      border-radius: 10px;
+      color: #fff;
+      border: 2px dashed #666;
+      margin-bottom: 1rem;
+      width: 100%;
+      cursor: pointer;
+      transition: border-color 0.3s;
+    }
+
+    input[type="file"]:hover {
+      border-color: #ff6b81;
+    }
+
+    button {
+      background-color: #ff6b81;
+      color: #fff;
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 1rem;
+      transition: all 0.3s;
+    }
+
+    button:hover {
+      background-color: #ff4757;
+      transform: scale(1.05);
+    }
+
+    .status {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+
+    audio {
+      margin-top: 1.5rem;
+      width: 100%;
+      border-radius: 10px;
+    }
+
+    .footer {
+      margin-top: 2rem;
+      font-size: 0.85rem;
+      color: #999;
+      font-style: italic;
+    }
+
+    .footer span {
+      display: inline-block;
+      margin-top: 4px;
+      color: #ff6b81;
+      font-weight: bold;
+    }
+
+    .loader {
+      border: 6px solid #444;
+      border-top: 6px solid #ff6b81;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      animation: spin 1s linear infinite;
+      margin: 1rem auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .download-btn {
+      display: inline-block;
+      margin-top: 1.2rem;
+      padding: 0.6rem 1.5rem;
+      background-color: #32ff7e;
+      color: #000;
+      font-weight: bold;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: background 0.3s, transform 0.3s;
+    }
+
+    .download-btn:hover {
+      background-color: #2ed573;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1><i class="fas fa-music"></i> Lofi Converter</h1>
+
+    <div class="upload-section">
+      <input type="file" id="audioFile" accept="audio/*">
+      <button onclick="uploadAndConvert()"><i class="fas fa-sliders-h"></i> Convert to Lofi</button>
+    </div>
+
+    <div id="loader" class="loader" style="display: none;"></div>
+    <p class="status" id="status"></p>
+    <audio id="audioPlayer" controls hidden></audio>
+    <a id="downloadBtn" class="download-btn" style="display:none;" download="lofi_song.mp3">⬇️ Download Lofi Song</a>
+
+    <div class="footer">
+      Made with ❤️ for music lovers<br>
+      <span>Created by Mr. Aakash</span>
+    </div>
+  </div>
+
+  <script>
+    async function uploadAndConvert() {
+      const fileInput = document.getElementById('audioFile');
+      const status = document.getElementById('status');
+      const audioPlayer = document.getElementById('audioPlayer');
+      const loader = document.getElementById('loader');
+      const downloadBtn = document.getElementById('downloadBtn');
+
+      if (!fileInput.files.length) {
+        status.textContent = 'Please select an audio file.';
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append('audio', file);
+
+      status.textContent = '';
+      loader.style.display = 'block';
+      audioPlayer.hidden = true;
+      downloadBtn.style.display = 'none';
+
+      try {
+        const response = await fetch('/convert', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) throw new Error('Conversion failed');
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+
+        audioPlayer.src = url;
+        audioPlayer.hidden = false;
+
+        downloadBtn.href = url;
+        downloadBtn.style.display = 'inline-block';
+
+        status.textContent = '✅ Lofi version ready!';
+      } catch (err) {
+        console.error(err);
+        status.textContent = '❌ Something went wrong. Try again.';
+      } finally {
+        loader.style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>
