@@ -6,13 +6,13 @@ from uuid import uuid4
 
 app = Flask(__name__, template_folder='templates')
 
-# Set max file size to 5MB
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB
-
 UPLOAD_FOLDER = 'uploads'
 OUTPUT_FOLDER = 'outputs'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
+# Max file size 5MB
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5 MB
 
 @app.route('/')
 def index():
@@ -24,37 +24,39 @@ def convert_to_lofi():
         return 'No audio file provided', 400
 
     file = request.files['audio']
-    if file.filename == '':
-        return 'No selected file', 400
-
     filename = str(uuid4()) + os.path.splitext(file.filename)[1]
     input_path = os.path.join(UPLOAD_FOLDER, filename)
-    output_path = os.path.join(OUTPUT_FOLDER, f"lofi_{filename}.mp3")
+    output_path = os.path.join(OUTPUT_FOLDER, f"lofi_{filename}")
+
+    file.save(input_path)
 
     try:
-        file.save(input_path)
-
-        # Convert audio
         audio = AudioSegment.from_file(input_path)
 
-# Convert to mono for compatibility
-audio = audio.set_channels(1)
+        # Safe conversion: keep stereo if stereo, mono if mono
+        if audio.channels > 2:
+            audio = audio.set_channels(2)
+        elif audio.channels == 1:
+            pass  # already mono
+        else:
+            audio = audio.set_channels(2)  # fallback to stereo
 
-# Slow down (lofi effect)
-slowed = audio._spawn(audio.raw_data, overrides={
-    "frame_rate": int(audio.frame_rate * 0.85)
-}).set_frame_rate(audio.frame_rate)
+        # Slow down the audio
+        slowed = audio._spawn(audio.raw_data, overrides={
+            "frame_rate": int(audio.frame_rate * 0.85)
+        }).set_frame_rate(audio.frame_rate)
 
-# Apply filter
-lofi = low_pass_filter(slowed, cutoff=1500)
+        # Apply low-pass filter
+        lofi = low_pass_filter(slowed, cutoff=1500)
 
-        # Export with good quality
-        lofi.export(output_path, format="mp3", bitrate="128k")
+        # Export to mp3
+        lofi.export(output_path, format="mp3")
 
         return send_file(output_path, as_attachment=True)
 
     except Exception as e:
-        return f"Error during conversion: {str(e)}", 500
+        print("Error:", e)
+        return "An error occurred while processing the audio.", 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True)
