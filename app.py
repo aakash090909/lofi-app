@@ -8,8 +8,16 @@ app = Flask(__name__, template_folder='templates')
 
 UPLOAD_FOLDER = 'uploads'
 OUTPUT_FOLDER = 'outputs'
+MAX_FILE_SIZE_MB = 5
+
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
+# Limit file size
+@app.before_request
+def limit_file_size():
+    if request.content_length and request.content_length > MAX_FILE_SIZE_MB * 1024 * 1024:
+        return "File too large. Max size is 5MB.", 413
 
 @app.route('/')
 def index():
@@ -21,17 +29,13 @@ def convert_to_lofi():
         return 'No audio file provided', 400
 
     file = request.files['audio']
-    if file.filename == '':
-        return 'No selected file', 400
-
     filename = str(uuid4()) + os.path.splitext(file.filename)[1]
     input_path = os.path.join(UPLOAD_FOLDER, filename)
-    output_path = os.path.join(OUTPUT_FOLDER, f"lofi_{filename}")
+    output_path = os.path.join(OUTPUT_FOLDER, f"lofi_{filename}.mp3")
+
+    file.save(input_path)
 
     try:
-        file.save(input_path)
-
-        # Load and convert audio
         audio = AudioSegment.from_file(input_path)
 
         # Convert stereo to mono if needed
@@ -49,8 +53,7 @@ def convert_to_lofi():
         return send_file(output_path, as_attachment=True)
 
     except Exception as e:
-        print("Error during conversion:", e)
-        return "Error processing audio", 500
+        return f"Conversion failed: {e}", 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True)
