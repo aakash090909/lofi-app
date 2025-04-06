@@ -1,12 +1,13 @@
 services:
   - type: web
     name: lofi-app
-    env: python
+    runtime: python
     buildCommand: |
       apt-get update && apt-get install -y ffmpeg
+      pip install --upgrade pip
       pip install -r requirements.txt
-    startCommand: gunicorn app:app --workers=1 --worker-class=gevent --timeout=180
+    startCommand: gunicorn app:app --timeout 180
     envVars:
-      - key: PYTHONUNBUFFERED
-        value: "true"
-    plan: free
+      - key: PYTHON_VERSION
+        value: 3.11
+    autoDeploy: true
