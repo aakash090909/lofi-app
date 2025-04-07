@@ -3,6 +3,7 @@ FROM python:3.11-slim
 
 # Install ffmpeg and other dependencies
 RUN apt-get update &&     apt-get install -y ffmpeg &&     pip install --upgrade pip
+RUN pip install --upgrade pip==25.0.1
 
 # Set working directory
 WORKDIR /app
