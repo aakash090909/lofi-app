@@ -2,3 +2,5 @@ Flask==2.2.5
 pydub==0.25.1
 gunicorn==21.2.0
 ffmpeg-python
+pip install --upgrade pip
+
