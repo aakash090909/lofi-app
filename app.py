@@ -5,6 +5,9 @@ import os
 from uuid import uuid4
 
 app = Flask(__name__, template_folder='templates')
+# Set max file upload size to 100MB
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB
+
 UPLOAD_FOLDER = 'uploads'
 OUTPUT_FOLDER = 'outputs'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
