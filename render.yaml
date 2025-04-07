@@ -1,13 +1,6 @@
 services:
   - type: web
     name: lofi-app
-    runtime: python
-    buildCommand: |
-      apt-get update && apt-get install -y ffmpeg
-      pip install --upgrade pip==25.0.1
-      pip install -r requirements.txt
-    startCommand: gunicorn app:app --timeout 180
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11
+    env: docker
+    plan: free
     autoDeploy: true
