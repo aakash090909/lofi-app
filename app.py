@@ -23,6 +23,8 @@ def convert_to_lofi():
     filename = str(uuid4()) + os.path.splitext(file.filename)[1]
     input_path = os.path.join(UPLOAD_FOLDER, filename)
     output_path = os.path.join(OUTPUT_FOLDER, f"lofi_{filename}")
+# return render_template('index.html')
+return "Lofi Converter is Live!"
 
     file.save(input_path)
 
