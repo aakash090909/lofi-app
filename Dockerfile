@@ -3,7 +3,8 @@ FROM python:3.11-slim
 # System dependencies + Upgrade pip the safe way
 RUN apt-get update && \
     apt-get install -y ffmpeg curl && \
-    curl -sS https://bootstrap.pypa.io/get-pip.py | python3
+    python -m ensurepip --upgrade && \
+    python -m pip install --upgrade pip
 
 # Set working directory
 WORKDIR /app
