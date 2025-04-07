@@ -151,6 +151,8 @@
   </style>
 </head>
 <body>
+  <canvas id="visualizer" style="position: fixed; top: 0; left: 0; z-index: -1; width: 100%; height: 100%;"></canvas>
+
   <div class="card">
     <h1><i class="fas fa-music"></i> Lofi Converter</h1>
 
@@ -217,6 +219,53 @@
         loader.style.display = 'none';
       }
     }
+
+    // 3D Visualizer Script
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+    let audioCtx, analyser, source, dataArray, bufferLength;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function setupAudioVisualization(audioElement) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioCtx.createAnalyser();
+      source = audioCtx.createMediaElementSource(audioElement);
+      source.connect(analyser);
+      analyser.connect(audioCtx.destination);
+      analyser.fftSize = 256;
+      bufferLength = analyser.frequencyBinCount;
+      dataArray = new Uint8Array(bufferLength);
+      draw();
+    }
+
+    function draw() {
+      requestAnimationFrame(draw);
+      analyser.getByteFrequencyData(dataArray);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let barWidth = (canvas.width / bufferLength) * 2.5;
+      let barHeight;
+      let x = 0;
+
+      for (let i = 0; i < bufferLength; i++) {
+        barHeight = dataArray[i] * 1.5;
+        const r = 250, g = 80 + barHeight / 5, b = 150 + i;
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
+        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+        x += barWidth + 1;
+      }
+    }
+
+    const audio = document.getElementById('audioPlayer');
+    audio.addEventListener('play', () => {
+      if (!audioCtx) setupAudioVisualization(audio);
+      else audioCtx.resume();
+    });
   </script>
 </body>
 </html>
