@@ -6,7 +6,7 @@ services:
     autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
-        value: 3.90
+        value: 3.11
       - key: FLASK_ENV
         value: production
       - key: PORT
